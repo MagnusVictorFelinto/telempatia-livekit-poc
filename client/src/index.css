@@ -1,0 +1,640 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-primary: #2f6fe4;
+  --color-primary-dark: #1f52ad;
+  --color-primary-soft: #dbe8fd;
+  --color-warning: #e8792e;
+  --color-warning-dark: #c4611e;
+  --color-success: #4caf50;
+  --color-success-dark: #3a8a3d;
+  --color-border: #dfe3e8;
+  --color-text: #1f2933;
+  --color-muted: #6b7785;
+  --color-panel-bg: #eef1f5;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select {
+  font-family: inherit;
+}
+
+/* Placeholder de layout — o estilo visual final (cores, tipografia, espaçamentos)
+   será aplicado depois de recebermos o mockup de referência. */
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.card h1 {
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.field input,
+.field select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 11px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-text {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+/* --- Room layout --- */
+.room-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  grid-template-rows: auto 1fr;
+  color: var(--color-text);
+  grid-template-areas:
+    "header header"
+    "video sidebar";
+}
+
+.room-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.room-video {
+  grid-area: video;
+  background: #10151a;
+  min-height: 0;
+}
+
+.room-sidebar {
+  grid-area: sidebar;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--color-text);
+}
+
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebar-tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  font-weight: 600;
+  color: var(--color-muted);
+  border-bottom: 2px solid transparent;
+}
+
+.sidebar-tabs button.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.chat-panel,
+.upload-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.chat-message {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  max-width: 90%;
+}
+
+.chat-message.self {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.chat-message .meta {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  margin-bottom: 2px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.chat-input-row button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.upload-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.upload-list li {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-list a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.role-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+/* --- Chat header (usado no dashboard do especialista) --- */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chat-header-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-header-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.chat-header-subtitle {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* =========================================================
+   Dashboard do especialista
+   ========================================================= */
+
+.specialist-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* --- Barra de fila --- */
+.queue-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 14px 24px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.queue-exit {
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  align-self: center;
+  padding: 6px 4px;
+  white-space: nowrap;
+}
+
+.queue-exit:hover {
+  color: var(--color-text);
+}
+
+.queue-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--color-border);
+}
+
+.queue-group-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.queue-group-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+}
+
+.queue-call-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.queue-call-btn-primary {
+  background: var(--color-primary);
+}
+
+.queue-call-btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.queue-call-btn-warning {
+  background: var(--color-warning);
+}
+
+.queue-call-btn-warning:hover {
+  background: var(--color-warning-dark);
+}
+
+.queue-avatars {
+  display: flex;
+  gap: 18px;
+}
+
+.queue-avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 64px;
+}
+
+.queue-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.queue-avatar-name {
+  font-size: 0.7rem;
+  color: var(--color-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* --- Corpo: paciente / vídeo / chat --- */
+.specialist-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+}
+
+.patient-panel {
+  background: var(--color-panel-bg);
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.patient-card-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.patient-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.patient-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.patient-field-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.patient-field-value {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.patient-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 4px 0;
+}
+
+.diagnosis-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.exams-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.exams-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exams-icon {
+  font-size: 0.9rem;
+}
+
+.exams-count {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  padding: 1px 8px;
+}
+
+.exams-chevron {
+  color: var(--color-muted);
+  transition: transform 0.15s ease;
+}
+
+.exams-chevron.open {
+  transform: rotate(180deg);
+}
+
+.exams-body {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.specialist-video {
+  min-height: 0;
+  background: #10151a;
+}
+
+.specialist-chat {
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+}
+
+/* --- Barra de ações da consulta --- */
+.specialist-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: #171e26;
+}
+
+.specialist-control-bar-icons .lk-control-bar {
+  background: transparent;
+}
+
+.control-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.control-pill {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.control-pill-primary {
+  background: var(--color-primary);
+}
+
+.control-pill-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.control-pill-warning {
+  background: var(--color-warning);
+}
+
+.control-pill-warning:hover {
+  background: var(--color-warning-dark);
+}
+
+.control-pill-success {
+  background: var(--color-success);
+}
+
+.control-pill-success:hover {
+  background: var(--color-success-dark);
+}
+
+@media (max-width: 1100px) {
+  .specialist-body {
+    grid-template-columns: 240px 1fr 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .specialist-body {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+
+  .patient-panel,
+  .specialist-chat {
+    border: none;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .specialist-video {
+    min-height: 360px;
+  }
+}

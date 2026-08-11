@@ -1,0 +1,16 @@
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: telempatia-livekit
+    command: --dev --bind 0.0.0.0
+    restart: unless-stopped
+    ports:
+      # API HTTP/WebSocket
+      - "7880:7880"
+      # TURN/ICE via TCP
+      - "7881:7881"
+      # RTC via UDP (faixa reduzida para uso local)
+      - "50000-50100:50000-50100/udp"
+    environment:
+      # Credenciais padrão do modo --dev (ver README)
+      - "LIVEKIT_KEYS=devkey: secret"
