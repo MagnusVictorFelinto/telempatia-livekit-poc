@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { LiveKitRoom, useRoomContext } from "@livekit/components-react";
+import { LiveKitRoom } from "@livekit/components-react";
 import { fetchToken } from "../lib/api";
-import { ROLE_LABELS, type Role, type TokenResponse } from "../lib/types";
-import { useDataChat } from "../hooks/useDataChat";
-import VideoStage from "../components/VideoStage";
-import ChatPanel from "../components/ChatPanel";
-import UploadPanel from "../components/UploadPanel";
+import { SELF_ROLE, type TokenResponse } from "../lib/types";
 import QueueBar from "../components/specialist/QueueBar";
 import PatientPanel from "../components/specialist/PatientPanel";
 import SpecialistVideoStage from "../components/specialist/SpecialistVideoStage";
@@ -14,63 +10,12 @@ import SpecialistChatPanel from "../components/specialist/SpecialistChatPanel";
 
 interface NavState {
   participantName: string;
-  role: Role;
 }
 
-// Componente interno: só existe dentro do <LiveKitRoom>, então tem acesso
-// ao `room` via useRoomContext() para plugar o chat por Data Channel.
-function RoomSidebar({ roomId, participantName, role }: { roomId: string; participantName: string; role: Role }) {
-  const room = useRoomContext();
-  const { messages, sendMessage } = useDataChat(room, participantName, role);
-  const [tab, setTab] = useState<"chat" | "files">("chat");
-
-  return (
-    <aside className="room-sidebar">
-      <div className="sidebar-tabs">
-        <button className={tab === "chat" ? "active" : ""} onClick={() => setTab("chat")}>
-          Chat
-        </button>
-        <button className={tab === "files" ? "active" : ""} onClick={() => setTab("files")}>
-          Arquivos
-        </button>
-      </div>
-      {tab === "chat" ? (
-        <ChatPanel messages={messages} onSend={sendMessage} />
-      ) : (
-        <UploadPanel roomId={roomId} />
-      )}
-    </aside>
-  );
-}
-
-// Dashboard completo para o papel "especialista": fila de atendimento e
-// ficha do paciente (mockados), vídeo com barra de ações da consulta, e
-// chat real via Data Channel. É o que aparece no mockup de referência.
-function SpecialistDashboard({
-  roomId,
-  participantName,
-  role,
-}: {
-  roomId: string;
-  participantName: string;
-  role: Role;
-}) {
-  return (
-    <div className="specialist-layout">
-      <QueueBar />
-      <div className="specialist-body">
-        <PatientPanel roomId={roomId} />
-        <main className="specialist-video" data-lk-theme="default">
-          <SpecialistVideoStage />
-        </main>
-        <aside className="specialist-chat">
-          <SpecialistChatPanel selfName={participantName} selfRole={role} />
-        </aside>
-      </div>
-    </div>
-  );
-}
-
+// Dashboard do especialista: fila de atendimento e ficha do paciente
+// (mockados), vídeo com barra de ações da consulta, e chat real via Data
+// Channel. Este cliente atende exclusivamente o especialista — o médico
+// solicitante usa o app mobile.
 export default function RoomPage() {
   const { roomName = "" } = useParams();
   const location = useLocation();
@@ -81,14 +26,14 @@ export default function RoomPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!state?.participantName || !state?.role) {
+    if (!state?.participantName) {
       // Recarregou a página ou entrou direto pela URL sem passar pelo Join.
       navigate("/", { replace: true });
       return;
     }
 
     let cancelled = false;
-    fetchToken({ roomName, participantName: state.participantName, role: state.role })
+    fetchToken({ roomName, participantName: state.participantName, role: SELF_ROLE })
       .then((res) => {
         if (!cancelled) setConnInfo(res);
       })
@@ -138,26 +83,18 @@ export default function RoomPage() {
           header, chat e painéis com fundo claro, deixando texto branco
           sobre branco. Escopando aqui, o resto da UI usa nossas próprias
           cores (index.css) normalmente. */}
-      {state.role === "especialista" ? (
-        <SpecialistDashboard
-          roomId={roomName}
-          participantName={state.participantName}
-          role={state.role}
-        />
-      ) : (
-        <div className="room-layout">
-          <header className="room-header">
-            <strong>Sala: {roomName}</strong>
-            <span className="role-badge">
-              {state.participantName} · {ROLE_LABELS[state.role]}
-            </span>
-          </header>
-          <main className="room-video" data-lk-theme="default">
-            <VideoStage />
+      <div className="specialist-layout">
+        <QueueBar />
+        <div className="specialist-body">
+          <PatientPanel roomId={roomName} />
+          <main className="specialist-video" data-lk-theme="default">
+            <SpecialistVideoStage />
           </main>
-          <RoomSidebar roomId={roomName} participantName={state.participantName} role={state.role} />
+          <aside className="specialist-chat">
+            <SpecialistChatPanel selfName={state.participantName} />
+          </aside>
         </div>
-      )}
+      </div>
     </LiveKitRoom>
   );
 }

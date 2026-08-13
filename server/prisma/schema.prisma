@@ -7,12 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// `id` é o próprio nome da sala (mesmo identificador usado no LiveKit e na
-// pasta de uploads), simplificando o roteamento das APIs.
+// `id` é o próprio roomName do LiveKit (também usado como pasta de uploads).
+// Gerado no servidor, opaco e não adivinhável — ver src/lib/roomName.ts.
+//
+// `atendimentoId` amarra a sala ao atendimento da API principal. É único, o
+// que garante que a mesma consulta nunca ganhe duas salas e que o roomName
+// seja imutável durante todo o ciclo de vida do atendimento.
 model Room {
-  id        String   @id
-  createdAt DateTime @default(now())
-  files     UploadFile[]
+  id            String   @id
+  atendimentoId String?  @unique
+  createdAt     DateTime @default(now())
+  files         UploadFile[]
 }
 
 model UploadFile {

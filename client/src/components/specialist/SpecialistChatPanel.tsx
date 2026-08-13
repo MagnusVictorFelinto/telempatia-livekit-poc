@@ -1,30 +1,23 @@
 import { useRoomContext, useRemoteParticipants } from "@livekit/components-react";
 import { useDataChat } from "../../hooks/useDataChat";
-import type { Role } from "../../lib/types";
+import { displayNameOf, initialsOf } from "../../lib/participants";
+import { SELF_ROLE } from "../../lib/types";
 import ChatPanel from "../ChatPanel";
 
 interface Props {
   selfName: string;
-  selfRole: Role;
 }
 
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-// Chat do dashboard do especialista: mesma lógica de useDataChat já usada na
-// sala simples, só que com um cabeçalho mostrando quem é o outro
-// participante conectado na sala (nome real do LiveKit, não mockado).
-export default function SpecialistChatPanel({ selfName, selfRole }: Props) {
+// Chat do dashboard do especialista, com cabeçalho mostrando quem é o outro
+// participante conectado. O nome vem do metadata do LiveKit (o identity é um
+// UUID opaco e não deve aparecer na UI).
+export default function SpecialistChatPanel({ selfName }: Props) {
   const room = useRoomContext();
   const remoteParticipants = useRemoteParticipants();
-  const { messages, sendMessage } = useDataChat(room, selfName, selfRole);
+  const { messages, sendMessage } = useDataChat(room, selfName, SELF_ROLE);
 
   const peer = remoteParticipants[0];
-  const peerName = peer?.name || peer?.identity || "Aguardando participante";
+  const peerName = displayNameOf(peer, "Aguardando participante");
 
   return (
     <ChatPanel

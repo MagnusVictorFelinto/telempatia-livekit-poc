@@ -1,10 +1,13 @@
-import { GridLayout, ParticipantTile, RoomAudioRenderer, useTracks } from "@livekit/components-react";
+import { GridLayout, RoomAudioRenderer, useTracks } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import SpecialistControls from "./SpecialistControls";
+import NamedParticipantTile from "./NamedParticipantTile";
 
-// Mesma lógica de vídeo do VideoStage padrão, mas com a barra de ações do
-// especialista (Receitar / Encerrar temporariamente / Finalizar atendimento)
-// no lugar do ControlBar padrão.
+// Grade de vídeo do especialista, com a barra de ações da consulta
+// (Receitar / Encerrar temporariamente / Finalizar atendimento).
+//
+// Usa NamedParticipantTile em vez do ParticipantTile padrão porque o identity
+// virou UUID opaco — o nome de exibição vem do metadata do participante.
 export default function SpecialistVideoStage() {
   const tracks = useTracks(
     [
@@ -18,7 +21,7 @@ export default function SpecialistVideoStage() {
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, minHeight: 0 }}>
         <GridLayout tracks={tracks} style={{ height: "100%" }}>
-          <ParticipantTile />
+          <NamedParticipantTile />
         </GridLayout>
       </div>
       <SpecialistControls />

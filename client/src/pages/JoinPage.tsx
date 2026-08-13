@@ -1,13 +1,13 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createRoom } from "../lib/api";
-import { ROLE_LABELS, type Role } from "../lib/types";
+import { ensureRoom, resolveRoomByAtendimento } from "../lib/api";
 
+// Cliente web = especialista. O médico solicitante entra pelo app mobile, que
+// recebe o roomName direto do atendimento — ninguém digita nome de sala lá.
 export default function JoinPage() {
   const navigate = useNavigate();
   const [participantName, setParticipantName] = useState("");
-  const [role, setRole] = useState<Role>("medico_solicitante");
-  const [roomName, setRoomName] = useState("");
+  const [referencia, setReferencia] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,16 +15,28 @@ export default function JoinPage() {
     e.preventDefault();
     setError(null);
 
-    if (!participantName.trim() || !roomName.trim()) {
-      setError("Preencha seu nome e o nome da sala.");
+    const nome = participantName.trim();
+    const ref = referencia.trim();
+
+    if (!nome || !ref) {
+      setError("Preencha seu nome e o atendimento ou a sala.");
       return;
     }
 
     setLoading(true);
     try {
-      await createRoom(roomName.trim());
-      navigate(`/room/${encodeURIComponent(roomName.trim())}`, {
-        state: { participantName: participantName.trim(), role },
+      // Caminho preferido: o valor informado é um id de atendimento e o
+      // servidor devolve a sala já registrada para ele.
+      let roomName = await resolveRoomByAtendimento(ref);
+
+      // Fallback: o valor é o próprio roomName (útil em teste manual, e
+      // enquanto o atendimento ainda não passa por POST /api/rooms).
+      if (!roomName) {
+        roomName = await ensureRoom({ roomName: ref });
+      }
+
+      navigate(`/room/${encodeURIComponent(roomName)}`, {
+        state: { participantName: nome },
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao entrar na sala");
@@ -37,6 +49,7 @@ export default function JoinPage() {
     <div className="page">
       <form className="card" onSubmit={handleSubmit}>
         <h1>Entrar na teleconsulta</h1>
+        <p className="card-subtitle">Acesso do especialista</p>
 
         <div className="field">
           <label htmlFor="name">Seu nome</label>
@@ -44,30 +57,23 @@ export default function JoinPage() {
             id="name"
             value={participantName}
             onChange={(e) => setParticipantName(e.target.value)}
-            placeholder="Ex.: Dra. Ana Souza"
+            placeholder="Ex.: Dra. Beatriz Souza"
             autoFocus
           />
         </div>
 
         <div className="field">
-          <label htmlFor="role">Papel</label>
-          <select id="role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="room">Nome da sala</label>
+          <label htmlFor="ref">Atendimento ou sala</label>
           <input
-            id="room"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            placeholder="Ex.: caso-123"
+            id="ref"
+            value={referencia}
+            onChange={(e) => setReferencia(e.target.value)}
+            placeholder="Ex.: atd-9f1c8b2e4a7d6350"
           />
+          <small className="field-hint">
+            Informe o id do atendimento. Se não houver sala registrada para ele, o valor é
+            usado como nome de sala.
+          </small>
         </div>
 
         <button className="btn-primary" type="submit" disabled={loading}>

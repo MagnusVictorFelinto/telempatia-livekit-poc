@@ -79,13 +79,15 @@ Abra `http://localhost:5173` no navegador.
    `http://localhost:5173` em duas abas do navegador (ou uma aba normal +
    uma anônima, para evitar cache de permissões de câmera/microfone
    compartilhado).
-2. Na **aba 1**: preencha nome (ex.: "Dra. Ana"), papel "Médico
-   solicitante" e sala "caso-123". Clique em "Entrar na sala".
-3. Na **aba 2**: preencha outro nome (ex.: "Dr. Bruno"), papel
-   "Especialista" e a **mesma sala** "caso-123". Clique em "Entrar na
-   sala".
+2. O web é exclusivo do **especialista** — não há mais seletor de papel. Para
+   testar dois participantes no navegador, abra duas abas e informe o **mesmo
+   valor** no campo "Atendimento ou sala" (ex.: `atd-teste-001`); ambas entram
+   como especialista. O fluxo real do médico solicitante é pelo app mobile.
+3. Na **aba 1**: preencha nome (ex.: "Dra. Ana") e a sala. Clique em "Entrar
+   na sala". Na **aba 2**: outro nome (ex.: "Dr. Bruno") e a mesma sala.
 4. Autorize câmera/microfone em ambas as abas. Você deve ver os dois
-   participantes na grade de vídeo.
+   participantes na grade de vídeo, identificados pelo `nomeExibicao` do
+   metadata (não pelo `identity`, que é um UUID opaco).
 5. Envie mensagens pelo chat em uma aba e confirme que aparecem na outra
    (chat trafega via Data Channel do LiveKit, sem persistência — some ao
    recarregar a página).
@@ -94,13 +96,34 @@ Abra `http://localhost:5173` no navegador.
 
 ## Endpoints do backend
 
-| Método | Rota                    | Descrição                                              |
-|--------|--------------------------|----------------------------------------------------------|
-| POST   | `/api/token`             | Gera JWT (via `livekit-server-sdk`) para entrar na sala  |
-| POST   | `/api/rooms`              | Registra/garante uma sala pelo nome                       |
-| POST   | `/api/upload`             | Upload multipart (`roomId`, `file`) salvo em `/server/src/uploads/<roomId>/` |
-| GET    | `/api/uploads/:roomId`    | Lista arquivos enviados na sala                           |
-| GET    | `/files/:roomId/:arquivo` | Download direto do arquivo (estático)                     |
+| Método | Rota                                    | Descrição                                              |
+|--------|------------------------------------------|----------------------------------------------------------|
+| GET    | `/api/health`                            | Healthcheck; devolve também `authRequired`                |
+| POST   | `/api/token`                             | Gera JWT para entrar na sala (identity opaco + metadata)  |
+| POST   | `/api/rooms`                             | Cria/recupera a sala. Com `atendimentoId` é idempotente e devolve sempre o mesmo `roomName` |
+| GET    | `/api/rooms/:roomId`                     | Dados da sala e seus arquivos                             |
+| GET    | `/api/rooms/por-atendimento/:id`         | Resolve o `roomName` a partir do atendimento              |
+| POST   | `/api/upload`                            | Upload multipart (`roomId`, `file`) em `/server/src/uploads/<roomId>/` |
+| GET    | `/api/uploads/:roomId`                   | Lista arquivos enviados na sala                           |
+| GET    | `/api/upload/limites`                    | Limites em bytes: `{ video, padrao }`                     |
+| GET    | `/files/:roomId/:arquivo`                | Download direto do arquivo (estático)                     |
+
+## Contrato com os clientes
+
+- **`roomName` é gerado pelo servidor**, no formato `atd-` + UUID v4 sem hífens. É opaco,
+  imutável por atendimento e validado por `^[a-z0-9-]{8,64}$` em todos os endpoints.
+  Nenhum cliente inventa nome de sala. Ver `server/src/lib/roomName.ts`.
+- **`identity` do participante é um UUID opaco.** O nome real trafega apenas no
+  `metadata`, como `{ "role": "...", "nomeExibicao": "..." }`. Nunca exiba o `identity`
+  na UI — o web faz isso em `client/src/lib/participants.ts`.
+- **Autenticação** por Bearer da API principal, ligada por `AUTH_REQUIRED` no `.env`.
+  Em dev fica `false` (token opcional); em qualquer ambiente com dado real de paciente
+  precisa ser `true`, com `AUTH_VERIFY_URL` apontando para a API Nest.
+- **Limites de upload**: 100 MB para `video/*`, 50 MB para os demais tipos.
+- O cliente web atende **somente o especialista**. O médico solicitante usa o app mobile.
+
+Detalhamento e pendências do lado da API Nest: [`RESPOSTA-CONTRATO-ROOMNAME.md`](./RESPOSTA-CONTRATO-ROOMNAME.md).
+Contrato de integração do app: [`PROMPT-MOBILE-EXPO-LIVEKIT.md`](./PROMPT-MOBILE-EXPO-LIVEKIT.md).
 
 ## Notas
 
