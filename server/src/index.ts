@@ -9,6 +9,7 @@ import tokenRouter from "./routes/token.js";
 import roomsRouter from "./routes/rooms.js";
 import uploadRouter from "./routes/upload.js";
 import { isAuthRequired, requireAuth } from "./middleware/auth.js";
+import { prisma } from "./prisma.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -52,10 +53,26 @@ app.use("/api", uploadRouter);
 // quando AUTH_REQUIRED=true.
 app.use("/files", requireAuth, express.static(path.join(__dirname, "uploads")));
 
+const MIGRACAO_PENDENTE =
+  "Banco desatualizado: rode `npx prisma migrate deploy && npx prisma generate` na pasta server/.";
+
+function isSchemaOutOfSync(err: unknown): boolean {
+  const code = (err as { code?: string })?.code;
+  // P2021 = tabela inexistente, P2022 = coluna inexistente.
+  if (code === "P2021" || code === "P2022") return true;
+  const message = err instanceof Error ? err.message : "";
+  return /no such column|no such table/i.test(message);
+}
+
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   // Erro de limite do multer vira 413 com mensagem clara em vez de 500.
   if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({ error: "Arquivo acima do limite de 100 MB" });
+  }
+
+  if (isSchemaOutOfSync(err)) {
+    console.error(`[server] ${MIGRACAO_PENDENTE}`);
+    return res.status(500).json({ error: MIGRACAO_PENDENTE });
   }
 
   console.error(err);
@@ -63,7 +80,28 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   res.status(500).json({ error: message });
 });
 
-app.listen(PORT, () => {
+// Rede de segurança: sem isto, qualquer rejeição não tratada derruba o
+// processo no Node 18+ e o navegador vê ERR_CONNECTION_REFUSED em vez de um
+// erro HTTP. Preferimos o servidor de pé com log do que morto em silêncio.
+process.on("unhandledRejection", (reason) => {
+  console.error("[server] unhandledRejection:", reason);
+});
+
+// Checagem de schema no boot: falha barulhenta e específica, em vez de o
+// primeiro request explodir com um stack trace gigante do Prisma.
+async function checarSchema(): Promise<void> {
+  try {
+    await prisma.room.findFirst({ select: { atendimentoId: true } });
+  } catch (err) {
+    if (isSchemaOutOfSync(err)) {
+      console.error(`\n[server] ERRO: ${MIGRACAO_PENDENTE}\n`);
+    } else {
+      console.warn("[server] não foi possível checar o schema no boot:", err);
+    }
+  }
+}
+
+app.listen(PORT, async () => {
   console.log(`[server] rodando em http://localhost:${PORT}`);
   console.log(`[server] autenticação obrigatória: ${isAuthRequired()}`);
   if (!isAuthRequired()) {
@@ -71,4 +109,5 @@ app.listen(PORT, () => {
       "[server] AVISO: AUTH_REQUIRED=false — /api/token, /api/upload, /api/uploads e /files estão abertos. Não usar assim com dado real.",
     );
   }
+  await checarSchema();
 });

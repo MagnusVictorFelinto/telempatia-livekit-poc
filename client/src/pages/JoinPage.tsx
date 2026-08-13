@@ -29,10 +29,15 @@ export default function JoinPage() {
       // servidor devolve a sala já registrada para ele.
       let roomName = await resolveRoomByAtendimento(ref);
 
-      // Fallback: o valor é o próprio roomName (útil em teste manual, e
-      // enquanto o atendimento ainda não passa por POST /api/rooms).
       if (!roomName) {
-        roomName = await ensureRoom({ roomName: ref });
+        // Ainda não há sala para esse atendimento. Se o valor já tem cara de
+        // roomName (o servidor valida [a-z0-9-]), usamos direto — é o caso de
+        // teste manual. Caso contrário tratamos como id de atendimento e
+        // deixamos o servidor gerar um nome opaco, que é o fluxo real.
+        const pareceRoomName = /^[a-z0-9-]{8,64}$/.test(ref);
+        roomName = pareceRoomName
+          ? await ensureRoom({ roomName: ref })
+          : await ensureRoom({ atendimentoId: ref });
       }
 
       navigate(`/room/${encodeURIComponent(roomName)}`, {

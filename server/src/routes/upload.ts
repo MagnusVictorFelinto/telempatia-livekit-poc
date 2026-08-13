@@ -8,6 +8,7 @@ import type { UploadFile } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { validateRoomName } from "../lib/roomName.js";
 import { requireAuth } from "../middleware/auth.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_ROOT = path.join(__dirname, "..", "uploads");
@@ -67,7 +68,7 @@ const router = Router();
 
 // POST /api/upload
 // multipart/form-data com campos: roomId, file
-router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
+router.post("/upload", requireAuth, upload.single("file"), asyncHandler(async (req, res) => {
   const roomId = (req.body?.roomId as string | undefined)?.trim();
   const file = req.file;
 
@@ -120,11 +121,11 @@ router.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
       downloadUrl: `/files/${roomId}/${record.storedName}`,
     },
   });
-});
+}));
 
 // GET /api/uploads/:roomId
 // Lista os arquivos já enviados nessa sala.
-router.get("/uploads/:roomId", requireAuth, async (req, res) => {
+router.get("/uploads/:roomId", requireAuth, asyncHandler(async (req, res) => {
   const { roomId } = req.params;
 
   const roomIdError = validateRoomName(roomId);
@@ -143,7 +144,7 @@ router.get("/uploads/:roomId", requireAuth, async (req, res) => {
       downloadUrl: `/files/${roomId}/${f.storedName}`,
     })),
   });
-});
+}));
 
 // GET /api/upload/limites
 // O app usa isso para validar o arquivo antes de subir 100 MB à toa.

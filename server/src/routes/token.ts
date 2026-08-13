@@ -4,6 +4,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { getLivekitCredentials, getLivekitWsUrl } from "../lib/livekit.js";
 import { validateRoomName } from "../lib/roomName.js";
 import { requireAuth } from "../middleware/auth.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
 
 const router = Router();
 
@@ -32,7 +33,7 @@ interface ParticipantMetadata {
 //
 // `identity` é um UUID opaco — não derive nada dele na UI. Para exibir quem é
 // quem, leia `participant.metadata` e use `{ role, nomeExibicao }`.
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   const { roomName, participantName, role } = req.body as TokenBody;
 
   if (!roomName || !participantName || !role) {
@@ -93,6 +94,6 @@ router.post("/", requireAuth, async (req, res) => {
     livekitUrl: getLivekitWsUrl(),
     metadata,
   });
-});
+}));
 
 export default router;

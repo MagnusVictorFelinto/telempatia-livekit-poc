@@ -3,6 +3,7 @@ import { prisma } from "../prisma.js";
 import { generateRoomName, validateRoomName } from "../lib/roomName.js";
 import { ensureLivekitRoom } from "../lib/livekit.js";
 import { requireAuth } from "../middleware/auth.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
 
 const router = Router();
 
@@ -29,7 +30,7 @@ interface CreateRoomBody {
 //     recebido, validando o formato.
 //
 // Em ambos os casos a sala é pré-criada no SFU via server SDK.
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   const { atendimentoId, roomName } = req.body as CreateRoomBody;
 
   if (atendimentoId?.trim()) {
@@ -67,10 +68,10 @@ router.post("/", requireAuth, async (req, res) => {
   await ensureLivekitRoom(room.id);
 
   res.status(201).json({ room, roomName: room.id, created: !requested });
-});
+}));
 
 // GET /api/rooms/:roomId
-router.get("/:roomId", requireAuth, async (req, res) => {
+router.get("/:roomId", requireAuth, asyncHandler(async (req, res) => {
   const room = await prisma.room.findUnique({
     where: { id: req.params.roomId },
     include: { files: true },
@@ -81,12 +82,12 @@ router.get("/:roomId", requireAuth, async (req, res) => {
   }
 
   res.json({ room });
-});
+}));
 
 // GET /api/rooms/por-atendimento/:atendimentoId
 // Permite ao cliente web (especialista) resolver a sala a partir do
 // atendimento, sem precisar que alguém digite o nome.
-router.get("/por-atendimento/:atendimentoId", requireAuth, async (req, res) => {
+router.get("/por-atendimento/:atendimentoId", requireAuth, asyncHandler(async (req, res) => {
   const room = await prisma.room.findUnique({
     where: { atendimentoId: req.params.atendimentoId },
   });
@@ -96,6 +97,6 @@ router.get("/por-atendimento/:atendimentoId", requireAuth, async (req, res) => {
   }
 
   res.json({ room, roomName: room.id });
-});
+}));
 
 export default router;
